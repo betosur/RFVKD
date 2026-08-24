@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0f172a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Karate U12"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>Ranking U12 · FVKD</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #273349;
+  --border: rgba(255,255,255,0.08);
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-bg: rgba(56,189,248,0.12);
+  --gold: #f59e0b;
+  --silver: #94a3b8;
+  --green: #4ade80;
+  --red: #f87171;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; max-width: 430px; margin: 0 auto; }
+
+/* HEADER */
+.app-header { padding: 1rem 1rem 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+.app-title { font-size: 20px; font-weight: 600; color: var(--text); }
+.app-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+/* STATS ROW */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0.5rem 1rem 0.75rem; }
+.stat-card { background: var(--surface); border-radius: var(--radius); padding: 0.9rem 1rem; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.stat-val { font-size: 26px; font-weight: 600; }
+.stat-val.blue { color: var(--accent); }
+.stat-val.gold { color: var(--gold); }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 1rem; margin-bottom: 0; }
+.tab { font-size: 13px; font-weight: 500; padding: 0.6rem 0.75rem; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* PANELS */
+.panel { display: none; padding: 1rem; }
+.panel.active { display: block; }
+
+/* RANKING LIST */
+.ranking-list { display: flex; flex-direction: column; gap: 8px; }
+.athlete-card { background: var(--surface); border-radius: var(--radius); padding: 0.9rem 1rem; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.15s; border: 1px solid transparent; }
+.athlete-card:active { background: var(--surface2); }
+.athlete-card.focal { border-color: var(--accent); background: var(--accent-bg); }
+.rank-num { font-size: 13px; font-weight: 600; width: 24px; text-align: center; flex-shrink: 0; }
+.rank-num.g { color: var(--gold); }
+.rank-num.s { color: var(--silver); }
+.rank-num.b { color: #cd7c3a; }
+.ath-info { flex: 1; min-width: 0; }
+.ath-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ath-name.focal { color: var(--accent); }
+.ath-org { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.progress-fill { height: 3px; border-radius: 2px; background: var(--accent); transition: width 0.4s; }
+.ath-pts { text-align: right; flex-shrink: 0; }
+.pts-num { font-size: 16px; font-weight: 600; color: var(--text); }
+.pts-num.focal { color: var(--accent); }
+.pts-lbl { font-size: 10px; color: var(--muted); }
+
+/* BUTTONS */
+.btn { display: block; width: 100%; padding: 0.8rem; font-size: 14px; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; text-align: center; transition: background 0.15s; margin-top: 10px; }
+.btn:active { background: var(--surface2); }
+.btn.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); font-weight: 600; }
+.btn.primary:active { opacity: 0.85; }
+.btn.danger { background: rgba(248,113,113,0.15); color: var(--red); border-color: rgba(248,113,113,0.3); }
+
+/* FORMS */
+.form-group { margin-bottom: 12px; }
+.form-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; display: block; }
+.form-input, .form-select { width: 100%; padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; appearance: none; -webkit-appearance: none; }
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+.form-error { font-size: 12px; color: var(--red); margin-top: 4px; display: none; }
+select.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+/* CALC RESULT */
+.calc-result { background: var(--accent-bg); border: 1px solid rgba(56,189,248,0.3); border-radius: var(--radius); padding: 1rem 1.1rem; margin-top: 12px; display: none; }
+.calc-result-label { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.calc-result-pts { font-size: 32px; font-weight: 700; color: var(--accent); }
+.calc-result-formula { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: monospace; }
+
+/* HISTORY */
+.hist-item { background: var(--surface); border-radius: var(--radius-sm); padding: 0.8rem 1rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.hist-event { font-size: 13px; font-weight: 500; color: var(--text); }
+.hist-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.hist-pts { font-size: 15px; font-weight: 600; color: var(--green); }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 1.5rem 1rem 2rem; width: 100%; max-width: 430px; max-height: 90dvh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 1rem; }
+
+/* SECTION TITLE */
+.section-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
+
+/* EMPTY */
+.empty { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 14px; }
+
+/* MEDAL BADGES */
+.medal { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.medal.oro { background: rgba(245,158,11,0.2); color: var(--gold); }
+.medal.plata { background: rgba(148,163,184,0.2); color: var(--silver); }
+.medal.bronce { background: rgba(205,124,58,0.2); color: #cd7c3a; }
+.medal.nada { background: rgba(148,163,184,0.1); color: var(--muted); }
+
+/* ATHLETE DETAIL */
+.detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.2rem; }
+.detail-avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-bg); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+.detail-name { font-size: 18px; font-weight: 600; color: var(--text); }
+.detail-org { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.detail-pts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.detail-stat { background: var(--surface2); border-radius: var(--radius-sm); padding: 0.7rem 0.9rem; }
+.detail-stat-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.detail-stat-val { font-size: 20px; font-weight: 600; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- APP HEADER -->
+<div class="app-header">
+  <div>
+    <div class="app-title">Ranking U12</div>
+    <div class="app-sub">FVKD · Kumite Mas -35kg</div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Humberto Garcia</div>
+    <div class="stat-val blue" id="hg-pts">—</div>
+    <div class="stat-sub">pts vigentes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Posición</div>
+    <div class="stat-val gold" id="hg-pos">—</div>
+    <div class="stat-sub">en el ranking</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('ranking')">Ranking</div>
+  <div class="tab" onclick="switchTab('calcular')">Calcular</div>
+  <div class="tab" onclick="switchTab('historial')">Historial</div>
+</div>
+
+<!-- PANEL: RANKING -->
+<div class="panel active" id="panel-ranking">
+  <div class="section-title">Posiciones actuales</div>
+  <div class="ranking-list" id="ranking-list"></div>
+  <button class="btn" onclick="openModal('modal-add-athlete')">+ Añadir atleta</button>
+</div>
+
+<!-- PANEL: CALCULAR -->
+<div class="panel" id="panel-calcular">
+  <div class="section-title">Simulador de puntos — fórmula FVKD</div>
+  <div class="form-group">
+    <label class="form-label">Atleta</label>
+    <select class="form-select" id="calc-ath"></select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Categoría</label>
+    <select class="form-select" id="calc-cat">
+      <optgroup label="Kumite Masculino">
+        <option value="KM-U12-35" selected>U12 Kumite Mas -35kg</option>
+        <option value="KM-U12-40">U12 Kumite Mas -40kg</option>
+        <option value="KM-U14-47">U14 Kumite Mas -47kg</option>
+        <option value="KM-U14-52">U14 Kumite Mas -52kg</option>
+        <option value="KM-U14-57">U14 Kumite Mas -57kg</option>
+        <option value="KM-U14+57">U14 Kumite Mas +57kg</option>
+        <option value="KM-CAD-52">Cadete Kumite Mas -52kg</option>
+        <option value="KM-CAD-57">Cadete Kumite Mas -57kg</option>
+        <option value="KM-CAD-63">Cadete Kumite Mas -63kg</option>
+        <option value="KM-CAD-70">Cadete Kumite Mas -70kg</option>
+        <option value="KM-CAD+70">Cadete Kumite Mas +70kg</option>
+        <option value="KM-JUN-60">Junior Kumite Mas -60kg</option>
+        <option value="KM-JUN-67">Junior Kumite Mas -67kg</option>
+        <option value="KM-JUN-75">Junior Kumite Mas -75kg</option>
+        <option value="KM-JUN-84">Junior Kumite Mas -84kg</option>
+        <option value="KM-JUN+84">Junior Kumite Mas +84kg</option>
+        <option value="KM-U21-60">Sub21 Kumite Mas -60kg</option>
+        <option value="KM-U21-67">Sub21 Kumite Mas -67kg</option>
+        <option value="KM-U21-75">Sub21 Kumite Mas -75kg</option>
+        <option value="KM-U21-84">Sub21 Kumite Mas -84kg</option>
+        <option value="KM-U21+84">Sub21 Kumite Mas +84kg</option>
+        <option value="KM-SEN-60">Senior Kumite Mas -60kg</option>
+        <option value="KM-SEN-67">Senior Kumite Mas -67kg</option>
+        <option value="KM-SEN-75">Senior Kumite Mas -75kg</option>
+        <option value="KM-SEN-84">Senior Kumite Mas -84kg</option>
+        <option value="KM-SEN+84">Senior Kumite Mas +84kg</option>
+      </optgroup>
+
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Competencia</label>
+    <select class="form-select" id="calc-event">
+      <optgroup label="Nacionales">
+        <option value="cbc">Copa Batalla de Carabobo</option>
+        <option value="cn">Campeonato Nacional</option>
+        <option value="sb">Copa Simón Bolívar</option>
+        <option value="fm">Copa Francisco de Miranda</option>
+        <option value="jn">Juegos Nacionales</option>
+        <option value="cp">Circuito Premium (Fase Final Liga)</option>
+      </optgroup>
+      <optgroup label="Internacionales">
+        <option value="ib">Campeonato Iberoamericano</option>
+        <option value="ca">Campeonato Centroamericano</option>
+        <option value="sa">Campeonato Sudamericano</option>
+        <option value="jbol">Juegos Bolivarianos</option>
+        <option value="k1a">Karate 1 Series A</option>
+        <option value="yl">Youth League</option>
+        <option value="mu">Campeonato Mundial Universitario</option>
+        <option value="jca">Juegos Centroamericanos</option>
+        <option value="jsa">Juegos Sudamericanos</option>
+        <option value="k1p">Karate 1 Premier League</option>
+        <option value="pan">Campeonato Panamericano</option>
+        <option value="jpa">Juegos Panamericanos</option>
+        <option value="mwkf">Campeonato Mundial WKF</option>
+        <option value="jo">Juegos Olímpicos</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Resultado obtenido</label>
+    <select class="form-select" id="calc-medal">
+      <option value="90">🥇 Oro — 1er lugar</option>
+      <option value="60" selected>🥈 Plata — 2do lugar</option>
+      <option value="30">🥉 Bronce — 3er lugar</option>
+      <option value="0">Sin medalla</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Combates ganados (victorias contadas)</label>
+    <input type="number" class="form-input" id="calc-rce" value="4" min="0" max="20" inputmode="numeric"/>
+    <div class="form-error" id="calc-err">Ingresa la cantidad de combates ganados.</div>
+  </div>
+  <button class="btn primary" onclick="calcPoints()">Calcular puntos</button>
+  <div class="calc-result" id="calc-result">
+    <div class="calc-result-label">Puntos a sumar al ranking</div>
+    <div class="calc-result-pts" id="calc-pts-val">—</div>
+    <div class="calc-result-formula" id="calc-formula">—</div>
+  </div>
+  <button class="btn" id="btn-apply" style="display:none;" onclick="applyPoints()">✓ Aplicar al ranking</button>
+</div>
+
+<!-- PANEL: HISTORIAL -->
+<div class="panel" id="panel-historial">
+  <div class="section-title">Competencias registradas</div>
+  <div id="historial-list"></div>
+</div>
+
+<!-- MODAL: AÑADIR ATLETA -->
+<div class="modal-overlay" id="modal-add-athlete" onclick="closeModalOutside(event,'modal-add-athlete')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nuevo atleta</div>
+    <div class="form-group">
+      <label class="form-label">Nombre completo</label>
+      <input type="text" class="form-input" id="new-name" placeholder="Ej: Carlos Rodríguez"/>
+      <div class="form-error" id="new-name-err">Ingresa el nombre del atleta.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Organización / Dojo</label>
+      <input type="text" class="form-input" id="new-org" placeholder="Ej: Ikigai de Venezuela"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Puntos vigentes actuales</label>
+      <input type="number" class="form-input" id="new-pts" placeholder="0" min="0" inputmode="numeric"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">¿Es Humberto Garcia?</label>
+      <select class="form-select" id="new-focal">
+        <option value="false">No</option>
+        <option value="true">Sí</option>
+      </select>
+    </div>
+    <button class="btn primary" onclick="saveAthlete()">Guardar atleta</button>
+    <button class="btn" onclick="closeModal('modal-add-athlete')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: DETALLE ATLETA -->
+<div class="modal-overlay" id="modal-athlete-detail" onclick="closeModalOutside(event,'modal-athlete-detail')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="detail-header">
+      <div class="detail-avatar" id="detail-avatar">HG</div>
+      <div>
+        <div class="detail-name" id="detail-name">—</div>
+        <div class="detail-org" id="detail-org">—</div>
+      </div>
+    </div>
+    <div class="detail-pts-row">
+      <div class="detail-stat">
+        <div class="detail-stat-label">Puntos vigentes</div>
+        <div class="detail-stat-val" id="detail-pts">—</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-label">Posición</div>
+        <div class="detail-stat-val" id="detail-pos">—</div>
+      </div>
+    </div>
+    <div class="section-title">Historial del atleta</div>
+    <div id="detail-hist"></div>
+    <button class="btn" onclick="openEditPts()">Editar puntos manualmente</button>
+    <button class="btn danger" onclick="deleteAthlete()">Eliminar atleta</button>
+    <button class="btn" onclick="closeModal('modal-athlete-detail')" style="margin-top:4px;">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR PUNTOS -->
+<div class="modal-overlay" id="modal-edit-pts" onclick="closeModalOutside(event,'modal-edit-pts')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar puntos vigentes</div>
+    <div class="form-group">
+      <label class="form-label">Nuevos puntos vigentes</label>
+      <input type="number" class="form-input" id="edit-pts-val" min="0" inputmode="numeric"/>
+    </div>
+    <button class="btn primary" onclick="saveEditPts()">Guardar</button>
+    <button class="btn" onclick="closeModal('modal-edit-pts')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTES FVKD ──────────────────────────────────────────────
+const EVENTS = {
+  // ── NACIONALES ──────────────────────────────────────
+  cbc: { fd:4,   pr:13, i:7, label:'Copa Batalla de Carabobo',           tipo:'Nacional' },
+  cn:  { fd:5,   pr:13, i:7, label:'Campeonato Nacional',                 tipo:'Nacional' },
+  sb:  { fd:5,   pr:13, i:7, label:'Copa Simón Bolívar',                  tipo:'Nacional' },
+  fm:  { fd:5,   pr:13, i:7, label:'Copa Francisco de Miranda',            tipo:'Nacional' },
+  jn:  { fd:5.5, pr:13, i:0, label:'Juegos Nacionales',                   tipo:'Nacional' },
+  cp:  { fd:9,   pr:11, i:0, label:'Circuito Premium (Fase Final Liga)',   tipo:'Nacional' },
+  // ── INTERNACIONALES ─────────────────────────────────
+  ib:  { fd:5.5, pr:13, i:0, label:'Campeonato Iberoamericano',            tipo:'Internacional' },
+  ca:  { fd:5.5, pr:13, i:0, label:'Campeonato Centroamericano',           tipo:'Internacional' },
+  sa:  { fd:5.5, pr:13, i:0, label:'Campeonato Sudamericano',              tipo:'Internacional' },
+  jbol:{ fd:5.5, pr:13, i:0, label:'Juegos Bolivarianos',                  tipo:'Internacional' },
+  k1a: { fd:6,   pr:13, i:0, label:'Karate 1 Series A',                    tipo:'Internacional' },
+  yl:  { fd:6,   pr:13, i:0, label:'Youth League',                         tipo:'Internacional' },
+  mu:  { fd:6,   pr:13, i:0, label:'Campeonato Mundial Universitario',     tipo:'Internacional' },
+  jca: { fd:6.5, pr:13, i:0, label:'Juegos Centroamericanos',              tipo:'Internacional' },
+  jsa: { fd:6.5, pr:13, i:0, label:'Juegos Sudamericanos',                 tipo:'Internacional' },
+  k1p: { fd:7,   pr:13, i:0, label:'Karate 1 Premier League',              tipo:'Internacional' },
+  pan: { fd:7,   pr:13, i:0, label:'Campeonato Panamericano',              tipo:'Internacional' },
+  jpa: { fd:8,   pr:14, i:0, label:'Juegos Panamericanos',                 tipo:'Internacional' },
+  mwkf:{ fd:9,   pr:14, i:0, label:'Campeonato Mundial WKF',               tipo:'Internacional' },
+  jo:  { fd:10,  pr:14, i:0, label:'Juegos Olímpicos',                     tipo:'Internacional' },
+};
+const MEDAL_LBL = { 90:'Oro', 60:'Plata', 30:'Bronce', 0:'Sin medalla' };
+const MEDAL_CLASS = { 90:'oro', 60:'plata', 30:'bronce', 0:'nada' };
+
+// ── STORAGE ───────────────────────────────────────────────────────
+function loadData() {
+  try {
+    const raw = localStorage.getItem('karate_u12_data');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // Datos iniciales
+  return {
+    athletes: [
+      { id: 'hg', name: 'Humberto Garcia', org: 'Ikigai de Venezuela', pts: 927, focal: true }
+    ],
+    history: [
+      { id: Date.now(), athId: 'hg', event: 'Copa Simón Bolívar 2026', result: 'Plata', rce: 4, pts: 595 }
+    ]
+  };
+}
+
+function save(data) {
+  localStorage.setItem('karate_u12_data', JSON.stringify(data));
+}
+
+let DB = loadData();
+let selectedAthId = null;
+let lastCalcPts = 0;
+let lastCalcEvent = '';
+let lastCalcResult = '';
+let lastCalcRce = 0;
+
+// ── RENDER ────────────────────────────────────────────────────────
+function render() {
+  const sorted = [...DB.athletes].sort((a,b) => b.pts - a.pts);
+  const leader = sorted[0]?.pts || 1;
+  const hg = DB.athletes.find(a => a.focal);
+
+  // Stats header
+  if (hg) {
+    document.getElementById('hg-pts').textContent = hg.pts;
+    const pos = sorted.findIndex(a => a.focal) + 1;
+    document.getElementById('hg-pos').textContent = '#' + pos;
+  }
+
+  // Ranking list
+  const list = document.getElementById('ranking-list');
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="empty">No hay atletas registrados.<br>Añade el primero.</div>';
+  } else {
+    list.innerHTML = sorted.map((a, i) => {
+      const rkClass = i===0?'g':i===1?'s':i===2?'b':'';
+      const pct = Math.round((a.pts / leader) * 100);
+      return `<div class="athlete-card ${a.focal?'focal':''}" onclick="openAthleteDetail('${a.id}')">
+        <div class="rank-num ${rkClass}">#${i+1}</div>
+        <div class="ath-info">
+          <div class="ath-name ${a.focal?'focal':''}">${a.name}</div>
+          <div class="ath-org">${a.org}</div>
+          ${a.focal ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>` : ''}
+        </div>
+        <div class="ath-pts">
+          <div class="pts-num ${a.focal?'focal':''}">${a.pts}</div>
+          <div class="pts-lbl">pts</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Calc athlete select
+  const sel = document.getElementById('calc-ath');
+  const prev = sel.value;
+  sel.innerHTML = DB.athletes.map(a =>
+    `<option value="${a.id}" ${a.id===prev?'selected':''}>${a.name}</option>`
+  ).join('');
+
+  // Historial global
+  const histEl = document.getElementById('historial-list');
+  if (DB.history.length === 0) {
+    histEl.innerHTML = '<div class="empty">Sin competencias registradas.</div>';
+  } else {
+    const reversed = [...DB.history].reverse();
+    histEl.innerHTML = reversed.map(h => {
+      const ath = DB.athletes.find(a => a.id === h.athId);
+      return `<div class="hist-item">
+        <div>
+          <div class="hist-event">${h.event}</div>
+          <div class="hist-meta">${ath?.name || '—'} · ${h.category||''} · ${h.rce} victorias · <span class="medal ${MEDAL_CLASS[MEDAL_LBL_TO_VAL(h.result)]||'nada'}">${h.result}</span></div>
+        </div>
+        <div class="hist-pts">+${h.pts}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function MEDAL_LBL_TO_VAL(lbl) {
+  return { 'Oro':90, 'Plata':60, 'Bronce':30, 'Sin medalla':0 }[lbl] ?? 0;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['ranking','calcular','historial'].forEach(t => {
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['ranking','calcular','historial'][i]===tab);
+  });
+}
+
+// ── MODALS ────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalOutside(e, id) { if (e.target.id===id) closeModal(id); }
+
+// ── AÑADIR ATLETA ─────────────────────────────────────────────────
+function saveAthlete() {
+  const name = document.getElementById('new-name').value.trim();
+  const err = document.getElementById('new-name-err');
+  if (!name) { err.style.display='block'; return; }
+  err.style.display='none';
+  const org = document.getElementById('new-org').value.trim() || 'Por completar';
+  const pts = parseInt(document.getElementById('new-pts').value) || 0;
+  const focal = document.getElementById('new-focal').value === 'true';
+  if (focal) DB.athletes.forEach(a => a.focal = false);
+  DB.athletes.push({ id: 'ath_'+Date.now(), name, org, pts, focal });
+  save(DB);
+  render();
+  closeModal('modal-add-athlete');
+  document.getElementById('new-name').value='';
+  document.getElementById('new-org').value='';
+  document.getElementById('new-pts').value='';
+}
+
+// ── DETALLE ATLETA ────────────────────────────────────────────────
+function openAthleteDetail(id) {
+  selectedAthId = id;
+  const ath = DB.athletes.find(a => a.id===id);
+  if (!ath) return;
+  const sorted = [...DB.athletes].sort((a,b)=>b.pts-a.pts);
+  const pos = sorted.findIndex(a=>a.id===id)+1;
+  const initials = ath.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('detail-avatar').textContent = initials;
+  document.getElementById('detail-name').textContent = ath.name;
+  document.getElementById('detail-org').textContent = ath.org;
+  document.getElementById('detail-pts').textContent = ath.pts;
+  document.getElementById('detail-pos').textContent = '#'+pos;
+  const athHist = DB.history.filter(h=>h.athId===id).reverse();
+  const histEl = document.getElementById('detail-hist');
+  histEl.innerHTML = athHist.length
+    ? athHist.map(h=>`<div class="hist-item" style="margin-bottom:6px;">
+        <div>
+          <div class="hist-event">${h.event}</div>
+          <div class="hist-meta">${h.category||''} · ${h.rce} victorias · <span class="medal ${MEDAL_CLASS[MEDAL_LBL_TO_VAL(h.result)]||'nada'}">${h.result}</span></div>
+        </div>
+        <div class="hist-pts">+${h.pts}</div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:1rem 0;">Sin historial.</div>';
+  openModal('modal-athlete-detail');
+}
+
+function openEditPts() {
+  const ath = DB.athletes.find(a=>a.id===selectedAthId);
+  if (!ath) return;
+  document.getElementById('edit-pts-val').value = ath.pts;
+  closeModal('modal-athlete-detail');
+  openModal('modal-edit-pts');
+}
+
+function saveEditPts() {
+  const val = parseInt(document.getElementById('edit-pts-val').value);
+  if (isNaN(val) || val < 0) return;
+  const ath = DB.athletes.find(a=>a.id===selectedAthId);
+  if (ath) { ath.pts = val; save(DB); render(); }
+  closeModal('modal-edit-pts');
+}
+
+function deleteAthlete() {
+  if (!confirm('¿Eliminar este atleta del ranking?')) return;
+  DB.athletes = DB.athletes.filter(a=>a.id!==selectedAthId);
+  DB.history = DB.history.filter(h=>h.athId!==selectedAthId);
+  save(DB); render();
+  closeModal('modal-athlete-detail');
+}
+
+// ── CALCULAR PUNTOS ───────────────────────────────────────────────
+function calcPoints() {
+  const rce = parseInt(document.getElementById('calc-rce').value);
+  const errEl = document.getElementById('calc-err');
+  if (isNaN(rce) || rce < 0) { errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  const evKey = document.getElementById('calc-event').value;
+  const ev = EVENTS[evKey];
+  const ro = parseInt(document.getElementById('calc-medal').value);
+  lastCalcPts = Math.round((ev.i + ro + (ev.pr * rce)) * ev.fd);
+  lastCalcEvent = evKey;
+  lastCalcResult = MEDAL_LBL[ro];
+  lastCalcRce = rce;
+  document.getElementById('calc-pts-val').textContent = lastCalcPts + ' puntos';
+  document.getElementById('calc-formula').textContent =
+    `RC = (${ev.i} + ${ro} + (${ev.pr} × ${rce})) × ${ev.fd} = ${lastCalcPts}`;
+  document.getElementById('calc-result').style.display = 'block';
+  document.getElementById('btn-apply').style.display = 'block';
+}
+
+function applyPoints() {
+  const athId = document.getElementById('calc-ath').value;
+  const ath = DB.athletes.find(a=>a.id===athId);
+  if (!ath) return;
+  const ev = EVENTS[lastCalcEvent];
+  const year = new Date().getFullYear();
+  const catEl = document.getElementById('calc-cat');
+  const catLabel = catEl.options[catEl.selectedIndex].text;
+  ath.pts += lastCalcPts;
+  DB.history.push({
+    id: Date.now(),
+    athId,
+    event: `${ev.label} ${year}`,
+    category: catLabel,
+    result: lastCalcResult,
+    rce: lastCalcRce,
+    pts: lastCalcPts
+  });
+  save(DB); render();
+  document.getElementById('calc-result').style.display='none';
+  document.getElementById('btn-apply').style.display='none';
+  switchTab('ranking');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+render();
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
